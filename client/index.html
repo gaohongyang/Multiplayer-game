@@ -69,4 +69,17 @@
             socket.emit('keyPress', {inputId:'up', state:false});
     }
 
+    document.onmousedown = (event)=>{
+        socket.emit('keyPress', {inputId:'attack', state:true});
+    }
+    document.onmouseup = (event)=>{
+        socket.emit('keyPress', {inputId:'attack', state:false});
+    }
+    document.onmousemove = (event)=>{
+        let x = -250 + event.clientX - 8;
+        let y = -250 + event.clientY - 8;
+        let angle = Math.atan2(y,x) / Math.PI * 180;
+        socket.emit('keyPress', {inputId:'mouseAngle', state: angle});
+    }
+
 </script>
