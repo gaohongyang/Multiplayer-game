@@ -161,11 +161,59 @@ Bullet.update = ()=>{
 }
 
 let DEBUG = true;
+
+let USERS = {
+    "bob": "asd",
+    "bob2": "asd2",
+    "bob3": "asd3",
+}
+
+let isValidPassword = (data, cb)=>{
+    setTimeout(()=>{
+        cb (USERS[data.username] === data.password);
+    }, 10);
+}
+
+let isUsernameTaken = (data, cb)=>{
+    setTimeout(()=>{
+        cb (USERS[data.username]);
+    }, 10);
+}
+
+let addUser = (data, cb)=>{
+    setTimeout(()=>{
+        USERS[data.username] = data.password;
+        cb();
+    }, 10);
+}
+
 io.sockets.on('connection', (socket)=>{
     socket.id = Math.random();
     SOCKET_LIST[socket.id] = socket;
 
-    Player.onConnect(socket);
+    socket.on('signIn', (data)=>{
+        isValidPassword(data, (res)=>{
+            if(res){
+                Player.onConnect(socket);
+                socket.emit('signInResponse', {success:true});
+            }
+            else{
+                socket.emit('signInResponse', {success:false});
+            }
+        });
+    });
+    socket.on('signUp', (data)=>{
+        isUsernameTaken(data, (res)=>{
+            if(res){
+                socket.emit('signUpResponse', {success:false});
+            }
+            else{
+                addUser(data, ()=>{
+                    socket.emit('signUpResponse', {success:true});
+                });
+            }
+        });
+    });
 
     socket.on('disconnect', ()=>{
         delete SOCKET_LIST[socket.id];
