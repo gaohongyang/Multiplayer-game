@@ -139,6 +139,7 @@ Bullet.update = ()=>{
     return pack;
 }
 
+let DEBUG = true;
 io.sockets.on('connection', (socket)=>{
     socket.id = Math.random();
     SOCKET_LIST[socket.id] = socket;
@@ -148,6 +149,19 @@ io.sockets.on('connection', (socket)=>{
     socket.on('disconnect', ()=>{
         delete SOCKET_LIST[socket.id];
         Player.onDisconnect(socket);
+    })
+    socket.on('sendMsgToServer', (data)=>{
+        let playerName = ("" + socket.id).slice(2,7);
+        for(let i in SOCKET_LIST){
+            SOCKET_LIST[i].emit('addToChat', playerName + ': ' + data);
+        }
+    })
+    socket.on('evalServer', (data)=>{
+        if(!DEBUG)
+            return;
+        
+        let res = eval(data);
+        socket.emit('evalAnswer', res);
     })
 });
 
