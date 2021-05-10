@@ -1,3 +1,6 @@
+const mongojs = require("mongojs");
+const db =mongojs('localhost:27017/myGame',['account','progress']);
+
 const express = require('express');
 const app = express();
 const serv = require('http').createServer(app);
@@ -169,22 +172,27 @@ let USERS = {
 }
 
 let isValidPassword = (data, cb)=>{
-    setTimeout(()=>{
-        cb (USERS[data.username] === data.password);
-    }, 10);
+    db.account.find({username:data.username,password:data.password},(err, res)=>{
+        if(res.length > 0)
+            cb(true);
+        else
+            cb (false);
+    });
 }
 
 let isUsernameTaken = (data, cb)=>{
-    setTimeout(()=>{
-        cb (USERS[data.username]);
-    }, 10);
+    db.account.find({username:data.username},(err, res)=>{
+        if(res.length > 0)
+            cb(true);
+        else
+            cb (false);
+    });
 }
 
 let addUser = (data, cb)=>{
-    setTimeout(()=>{
-        USERS[data.username] = data.password;
+    db.account.insert({username:data.username,password:data.password},(err)=>{
         cb();
-    }, 10);
+    });
 }
 
 io.sockets.on('connection', (socket)=>{
