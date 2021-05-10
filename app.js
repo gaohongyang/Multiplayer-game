@@ -81,6 +81,12 @@ let Player = (id)=>{
             self.spdY = 0;
     }
     Player.list[id] = self;
+    initPack.player.push({
+        id:self.id,
+        x:self.x,
+        y:self.y,
+        number:self.number
+    });
     return self;
 }
 Player.list = {};
@@ -104,6 +110,7 @@ Player.onConnect = (socket)=>{
 
 Player.onDisconnect = (socket)=>{
     delete Player.list[socket.id];
+    removePack.player.push(socket.id);
 }
 
 Player.update = ()=>{
@@ -112,9 +119,9 @@ Player.update = ()=>{
         let player = Player.list[i];
         player.update();
         pack.push({
+            id: player.id,
             x: player.x,
-            y: player.y,
-            number: player.number
+            y: player.y
         });
     }
     return pack;
@@ -143,6 +150,11 @@ let Bullet = (parent, angle)=>{
         }
     }
     Bullet.list[self.id] = self;
+    initPack.bullet.push({
+        id:self.id,
+        x:self.x,
+        y:self.y
+    });
     return self;
 }
 Bullet.list = {};
@@ -152,10 +164,13 @@ Bullet.update = ()=>{
     for(let i in Bullet.list){
         let bullet = Bullet.list[i];
         bullet.update();
-        if(bullet.toRemove)
+        if(bullet.toRemove){
             delete Bullet.list[i];
+            removePack.bullet.push(bullet.id);
+        }
         else
             pack.push({
+                id: bullet.id,
                 x: bullet.x,
                 y: bullet.y
             });
@@ -242,6 +257,9 @@ io.sockets.on('connection', (socket)=>{
     })
 });
 
+let initPack = {player:[],bullet:[]};
+let removePack = {player:[],bullet:[]};
+
 setInterval(()=>{
     let pack = {
         player: Player.update(),
@@ -250,6 +268,12 @@ setInterval(()=>{
 
     for(let i in SOCKET_LIST){
         let socket = SOCKET_LIST[i];
-        socket.emit('newPositions', pack);
+        socket.emit('init', initPack);
+        socket.emit('update', pack);
+        socket.emit('remove', removePack);
     }
-}, 1000/25)
+    initPack.player = [];
+    initPack.bullet = [];
+    removePack.player = [];
+    removePack.bullet = [];
+}, 40)
